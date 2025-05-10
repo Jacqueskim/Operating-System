@@ -1,0 +1,40 @@
+﻿Group Members: Joshua Kim, Danny Cardenas
+
+
+Workload:
+Joshua Kim: startRead(), doneRead(), private fields
+Danny Cardenas: startWrite(), doneWrite(),  RWLock()
+Code is working fully and everything is completed
+
+
+Design Ideas:
+
+
+For the RWLock.h:
+AR: number of active readers
+WR: number of waiting readers
+AW: number of active writers
+WW: number of waiting writers
+Condition okToRead and okToWrite will be used to either sleep or signal/broadcast for activity 
+
+
+
+
+For RWLock():
+This is the constructor, so in here all we need to do is initialize the variables so that the other functions in RWLock.cc run smoothly. Since RWLock() is the constructor, we set all Active/Waiting Readers/Writers to 0 since when an object is created, we’d want all of these initially at 0. We also initialize the okToRead and the okToWrite conditions to the default condition variable attributes by using NULL in pthread_cond_init().
+
+
+For startWrite():
+Mutex lock prevents reading/writing from occurring at the same time. Wait until there is no active writers or readers. The writer will sleep on conditional variable if it is not safe to write and increments Waiting Writer which will then be decremented once the writer is no longer waiting. If there is no Active Writer or Active Reader, we exit the while loop(or just never enter it) and the writer will become active, we then release the lock.
+
+
+For doneWrite():
+To check out of the system,we acquire the lock then decrement Active Writer since this is a doneWrite() function. If there are any Waiting Writers, we wake up one writer since we are giving writers the priority. Otherwise, if there is a Waiting Reader we will wake up all readers via broadcast because there may be multiple threads waiting on the conditional variable, while signal only wakes up one. Once which ever condition block is executing, we release the lock
+
+
+For startRead():
+Wait until no writer is active and mutex lock is used to make sure reading and writing do not occur at the same time. If it’s not safe to read the conditional variable will cause the reader to sleep. Where the WR will be incremented and if the reader is no longer waiting it will be decremented. If there is no AW or WW, the reader will become active and release the lock.
+
+
+For doneRead():
+Acquire the lock and decrement the number of active readers if the number of activer readers is zero and number WW is greater than 0, then signal the writer to wake up and release the mutex lock for other writers.
